@@ -1,109 +1,123 @@
-# WGAN (Wasserstein Generative Adversarial Network)
+# WGAN Training on PathMNIST
 
-This repository contains a PyTorch implementation of a **Wasserstein GAN (WGAN)** to generate synthetic images from a noise vector. WGAN improves the training stability of GANs by using the Wasserstein loss with weight clipping.
+This repository provides an implementation of a Wasserstein Generative Adversarial Network (WGAN) to generate synthetic images based on the PathMNIST dataset from MedMNIST. The training code, evaluation metrics (FID, Inception Score), and sample visualizations are included.
 
-## 📌 Highlights
+## Table of Contents
+- [Overview](#overview)
+- [Dependencies and Installation](#dependencies-and-installation)
+- [Project Structure](#project-structure)
+- [Usage](#usage)
+- [Training Details](#training-details)
+- [Evaluation](#evaluation)
+- [Results](#results)
+- [Acknowledgments](#acknowledgments)
 
-- Implemented using **PyTorch**
-- Uses **Wasserstein Loss** instead of traditional GAN loss
-- Trains on **MNIST dataset**
-- Generates realistic handwritten digits
-- Includes model training and sample image saving
+## Overview
+**Objective:** Train a Wasserstein GAN to generate grayscale pathology images similar to those in the PathMNIST dataset.
 
----
+**Dataset:** The PathMNIST dataset is a collection of 28×28 histopathologic images.
 
-##  Theory Behind WGAN
+**Model Architecture:**
+- **Generator:** A fully-connected layer reshaped into feature maps, followed by transposed convolutions to upsample to 28×28 resolution.
+- **Critic (Discriminator):** Convolutional layers that downsample the images and produce a scalar output (Wasserstein distance estimate).
 
-Traditional GANs often suffer from instability and mode collapse due to vanishing gradients. WGAN replaces the standard binary cross-entropy loss with the **Wasserstein loss**, leading to:
+![Training Samples](training_sample.png)
+*Example training samples from PathMNIST dataset*
 
-- Better convergence
-- Improved sample diversity
-- Easier training with meaningful loss metrics
+## Dependencies and Installation
+- Python 3.7 or above
+- PyTorch 1.9 or above
+- Torchvision 0.10 or above
+- Numpy, Matplotlib, Pillow, tqdm, seaborn, scipy, scikit-learn (for various utilities and metrics)
+- medmnist for loading the PathMNIST dataset
 
-### WGAN Objective:
-
-**Critic Loss:**
-```math
-L = E[D(x)] - E[D(G(z))]
-```
-
-**Generator Loss:**
-```math
-L = -E[D(G(z))]
-```
-
----
-
-## 🧰 Requirements
-
-Install dependencies using:
-
+Install dependencies with:
 ```bash
-pip install -r requirements.txt
+pip install torch torchvision numpy matplotlib pillow tqdm seaborn scipy scikit-learn medmnist
 ```
-
-### Main libraries:
-- torch
-- torchvision
-- numpy
-- matplotlib
-
----
-
-## 📂 Directory Structure
-
+## Project Structure
 ```
-WGAN/
-├── data/             # MNIST dataset (downloaded automatically)
-├── images/           # Generated image samples during training
-├── models/           # Trained Generator and Critic models
-├── wgan.py           # Training loop
-├── model.py          # Generator and Critic architecture
-├── utils.py          # Image plotting and weight clipping
-└── README.md         # Project info
+wgan-pathmnist/
+├── data/                   # PathMNIST dataset storage
+├── generated_images/       # Generated samples during training
+│   └── generated_image.png # Example generated image
+├── evaluation/             # Evaluation metrics and plots
+│   ├── generator_critic_loss.png
+│   ├── wasserstein_distance.png
+│   └── pathmnist_wgan_metrics.json
+├── models/                 # Saved generator/critic weights
+├── wgan_train.py           # Main training script
+└── utils.py                # Helper functions
 ```
+## Training Details
 
----
+### Data Preparation
+PathMNIST images are processed with the following transformations:
+- Converted to grayscale (1 channel)
+- Normalized to mean=0.5, std=0.5
 
-## 🚀 How to Run
+### Hyperparameters
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `batch_size` | 128 (GPU) / 64 (CPU) | Training batch size |
+| `image_size` | 28 | Input image dimensions (28×28) |
+| `nc` | 1 | Number of channels (grayscale) |
+| `nz` | 100 | Latent space dimension |
+| `ngf` | 64 | Generator feature maps |
+| `ndf` | 64 | Critic feature maps |
+| `num_epochs` | 50 | Total training epochs |
+| `lr` | 0.00005 | Learning rate (RMSprop optimizer) |
+| `n_critic` | 5 | Critic updates per generator update |
+| `weight_clip` | 0.01 | Weight clipping constraint |
 
-To start training:
-
-```bash
-python wgan.py
+### Loss Function
+Wasserstein loss formulation:
+```math
+L_{WGAN} = \mathbb{E}[Critic(x)] - \mathbb{E}[Critic(G(z))]
 ```
+## Evaluation
 
-It will:
-- Train the model on MNIST
-- Save generated images every few epochs in `/images`
-- Save final models in `/models`
+### 1. Fréchet Inception Distance (FID)
+  FID Score: 67.4243
+  
+### 2. Inception Score (IS)
+  Inception Score: 1.0689 ± 0.0058
 
----
+### 3. Visual Inspection
+![Generated Samples Grid](generated_image.png)  
+*4×4 grid showing progressive improvement across training epochs (left→right, top→bottom)*
 
-## 📸 Sample Output
+- **Required Image Files**:
+  - `generated_images/epoch_comparison.png`: Should contain:
+    - 16 sample images
+    - Clear epoch labels
+    - Visible quality progression
 
-Here are a few images generated by the WGAN after training:
-
-![image](https://github.com/user-attachments/assets/8cb2780a-e1dc-4f73-9f6e-291915f15c9f)
-
----
-
-## 📈 Training Progress
-
-The generator improves as the critic learns better approximations of the Wasserstein distance.
-
----
 ## Results
-# Training Metrics
-![image](https://github.com/user-attachments/assets/66e4913a-f5cd-44af-87e2-aa0e2d198b11)
 
-Dual-axis plot showing generator (blue) and critic (orange) loss trajectories
+### Training Metrics
+![Loss Curves](generator_critic_loss.png)  
+*Dual-axis plot showing generator (blue) and critic (orange) loss trajectories*
 
-Image Contents:
-1. X-axis: Training epochs
-2. Left Y-axis: Generator loss scale
-3. Right Y-axis: Critic loss scale
-4. Vertical lines marking critic update steps
-# Wasserstein Distance
+- **Image Contents**:
+  - X-axis: Training epochs
+  - Left Y-axis: Generator loss scale
+  - Right Y-axis: Critic loss scale
+  - Vertical lines marking critic update steps
 
-![image](https://github.com/user-attachments/assets/c56f825d-9f47-4f45-8410-ec05c397654e)
+### Wasserstein Distance
+![Distance Metric](wassertian_distance.png)  
+*Smoothed curve showing the critic's output difference between real/fake samples*
+
+- **Image Contents**:
+  - X-axis: Training iterations
+  - Y-axis: Wasserstein distance value
+  - Horizontal reference line at y=0
+  - Highlighted clipping boundaries (±0.01)
+
+### Sample Outputs
+```text
+generated_images/
+├── epoch_10.png   # Early stage (blurry)
+├── epoch_30.png   # Intermediate
+└── epoch_final.png # Best results
