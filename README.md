@@ -6,11 +6,9 @@ This repository provides an implementation of a Wasserstein Generative Adversari
 - [Overview](#overview)
 - [Dependencies and Installation](#dependencies-and-installation)
 - [Project Structure](#project-structure)
-- [Usage](#usage)
 - [Training Details](#training-details)
 - [Evaluation](#evaluation)
 - [Results](#results)
-- [Acknowledgments](#acknowledgments)
 
 ## Overview
 **Objective:** Train a Wasserstein GAN to generate grayscale pathology images similar to those in the PathMNIST dataset.
